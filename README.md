@@ -1,63 +1,156 @@
-# Pacefinder — Percursos de corrida
+# Pacefinder
 
-Protótipo web de uma funcionalidade de descoberta e recomendação de percursos para corrida. A pessoa pode explorar uma região, visualizar uma camada demonstrativa de atividade e pedir uma rota circular caminhável.
+**Descoberta e geração de percursos para corrida.**
 
-## Estado do produto
+Pacefinder é um protótipo web que explora como um aplicativo de corrida pode ajudar a pessoa a decidir onde treinar. Ela escolhe uma região, informa a distância desejada e uma preferência de terreno; o sistema mostra uma rota caminhável aproximada no mapa.
 
-- Com uma Maps Demo Key, o mapa Google e a seleção de ponto no mapa ficam ativos sem vincular faturamento.
-- A mesma Demo Key é configurada no navegador e no servidor: Maps JavaScript para renderização; Geocoding API v4 e Routes API para busca de endereço e cálculo de rota.
-- Sem as chaves, a aplicação continua disponível em modo demonstrativo, com mapa e rotas ilustrativos.
-- Popularidade, avaliações, tempo, elevação dos cartões e áreas de atividade são sintéticos. Não representam corredores nem condições reais de qualquer região.
-- A rota é pedida no modo `WALK`. O Google informa que caminhos a pé podem estar sem calçadas ou caminhos de pedestres claros; a interface exibe esse aviso. O serviço não valida que o caminho seja apropriado para corrida, iluminado, seguro ou plano. A distância-alvo é aproximada.
+> **Esta é a primeira versão do projeto.** Ela valida o fluxo principal e a integração com mapas, mas ainda usa opções e informações genéricas em partes importantes da experiência. Não representa uma recomendação esportiva completa nem um serviço de segurança ou navegação para corrida.
 
-## Rodar localmente
+## Por que este projeto existe
 
-Requer Node.js 20 ou superior.
+Aplicativos de corrida acompanham atividades e desempenho, mas nem sempre ajudam a escolher um percurso que combine com o objetivo do treino. Uma distância ou ritmo planejado pode ser mais difícil de cumprir em um trajeto com subidas ou características desconhecidas.
+
+O Pacefinder investiga uma pergunta: **como conectar o objetivo do treino ao lugar onde a pessoa vai correr?** A proposta é um módulo que poderia complementar uma plataforma de corrida existente, sem substituir GPS, histórico de atividades ou acompanhamento de desempenho.
+
+## O que a primeira versão permite fazer
+
+1. Buscar um bairro, cidade ou endereço e posicionar o mapa.
+2. Escolher o ponto de partida tocando no mapa ou solicitar a localização atual ao navegador.
+3. Ajustar uma distância aproximada entre 2 e 15 km.
+4. Selecionar uma preferência de terreno: qualquer, plano ou com subidas.
+5. Solicitar uma volta aproximada e visualizar sua geometria no Google Maps.
+
+O botão **Como usar** apresenta um guia curto para esse fluxo. A interface também funciona em telas móveis; para testar em outro aparelho durante o desenvolvimento, consulte [Acesso pelo celular](#acesso-pelo-celular).
+
+## O que é real e o que ainda é genérico
+
+| Parte do protótipo | Situação na primeira versão |
+| --- | --- |
+| Mapa, busca de endereço e geometria da rota | Usa serviços do Google Maps quando a Demo Key está configurada. |
+| Distância e terreno escolhidos | São enviados ao gerador, mas a distância final é aproximada e o terreno não é conferido com dados de elevação. |
+| Sugestões em cartões | São opções demonstrativas; não correspondem a percursos reais da região pesquisada. |
+| Popularidade e áreas de atividade | São dados simulados, sem telemetria de corredores. |
+| Avaliações, tempo e elevação dos cartões | São valores fictícios, sem avaliações reais ou análise de altimetria. |
+| Iluminação, segurança e infraestrutura | Não são avaliadas pelo sistema. |
+
+O cálculo atual usa a Routes API no modo de deslocamento a pé (`WALK`) e pontos intermediários estimados ao redor da origem para tentar formar uma volta. Uma rota para pedestres não garante calçadas, iluminação, segurança, acessibilidade ou adequação à corrida. A distância solicitada também pode diferir da distância retornada; confira o percurso antes de utilizá-lo.
+
+## Tecnologias
+
+- React 19, TypeScript e Vite para a interface.
+- CSS responsivo para os layouts desktop e mobile.
+- Node.js e Express para os endpoints locais que intermediam as chamadas de geocodificação e rotas.
+- Google Maps JavaScript API para renderizar e interagir com o mapa.
+- Geocoding API v4 para converter o endereço pesquisado em coordenadas.
+- Routes API para solicitar o percurso caminhável.
+
+## Como executar localmente
+
+Requisitos: Node.js **20.19 ou superior** ou **22.12 ou superior**.
 
 ```bash
+git clone https://github.com/J-Ferre1ra/pacefinder.git
+cd pacefinder
 npm install
+```
+
+Para iniciar a aplicação e a API local:
+
+```bash
 npm run dev:all
 ```
 
-Abra `http://localhost:5173`. O script inicia o Vite e a API Express local. Para iniciar separadamente, use `npm run dev` e `npm run dev:api` em dois terminais.
+Abra `http://localhost:5173`. O Vite atende a interface e encaminha as chamadas `/api` ao servidor Express, iniciado na porta `8787` por padrão.
 
-## Ativar a Maps Demo Key (sem faturamento)
+Para iniciar os serviços separadamente, use dois terminais:
 
-1. Entre na sua conta Google e solicite uma [Maps Demo Key](https://developers.google.com/maps/documentation/javascript/demo-key). O Google pede que você aceite os termos próprios da chave de demonstração.
-2. Copie `.env.example` para `.env` e coloque a mesma Demo Key nas duas variáveis:
-
-```dotenv
-VITE_GOOGLE_MAPS_API_KEY=sua_maps_demo_key
-GOOGLE_MAPS_DEMO_API_KEY=sua_maps_demo_key
-PORT=8787
+```bash
+npm run dev
+npm run dev:api
 ```
 
-3. Reinicie `npm run dev:all`. A Demo Key dá acesso somente a um conjunto de recursos para prototipagem e tem limite diário; se atingir o limite, o Google pausa o serviço até o dia seguinte, sem cobrança. Confira os limites e termos atuais na [documentação da Demo Key](https://developers.google.com/maps/documentation/javascript/demo-key).
+## Configurar o Google Maps Demo Key
 
-O nome `VITE_GOOGLE_MAPS_API_KEY` indica que essa cópia é embutida no navegador. Isso é esperado para a Demo Key de prototipagem e não a transforma em segredo. A variável do servidor permite chamar Geocoding/Routes pelo backend; ela contém a mesma chave, mas não vai para o bundle do navegador. Não comite o arquivo `.env` nem cole a chave no chat.
+Sem chave, a aplicação abre em modo demonstrativo e exibe mapas e percursos ilustrativos. Para ativar a integração com o Google Maps:
 
-Uma migração posterior para chaves padrão exigirá configurar faturamento, restringir a chave de navegador por origem e manter uma chave de serviço separada, restrita às APIs usadas.
+1. Solicite uma [Maps Demo Key](https://developers.google.com/maps/documentation/javascript/demo-key) na sua conta Google e siga as instruções oficiais. A Demo Key é destinada a prototipagem, não exige configuração de faturamento e possui limites de uso.
+2. Copie `.env.example` para `.env`:
 
-## Fluxo técnico
+   ```bash
+   cp .env.example .env
+   ```
 
-1. `GoogleMapPanel` carrega Maps JavaScript API, comunica o ponto escolhido ao React e pede busca de endereço ao endpoint local.
-2. O front end envia coordenadas e preferências para `POST /api/routes/generate`.
-3. O servidor valida os dados, aplica limite de chamadas e chama Geocoding API v4 ou Routes API usando a Demo Key.
-4. A resposta devolve distância, duração e polyline codificada; o front end decodifica a geometria e a desenha no mapa Google.
+   No PowerShell do Windows, use `Copy-Item .env.example .env`.
 
-## Limites conhecidos
+3. Preencha a mesma Demo Key nas duas variáveis do `.env`:
 
-- A camada de atividade e os cartões continuam fictícios mesmo com Google Maps conectado.
-- A integração atual não coleta telemetria de corredores nem persiste avaliações.
-- O gerador cria pontos intermediários ao redor da origem para formar uma volta aproximada; não escolhe esses pontos por popularidade.
-- A preferência de terreno ainda não é validada por dados de elevação. O percurso retornado pode não corresponder à preferência.
-- A Demo Key é exclusiva para prototipagem, tem recursos e quotas diárias limitados e depende dos termos publicados pelo Google.
-- O servidor de desenvolvimento não inclui autenticação de usuário nem armazenamento. Antes de publicar, configure restrições e quotas das chaves, limites operacionais adequados, HTTPS e proteção de origem conforme a hospedagem.
+   ```dotenv
+   VITE_GOOGLE_MAPS_API_KEY=sua_maps_demo_key
+   GOOGLE_MAPS_DEMO_API_KEY=sua_maps_demo_key
+   PORT=8787
+   ```
 
-## Stack
+4. Reinicie `npm run dev:all` para que a interface e o servidor carreguem as variáveis.
 
-- React 19, TypeScript e Vite
-- Google Maps JavaScript API e Geocoding API
-- Node.js e Express para o endpoint que chama Routes API
+`VITE_GOOGLE_MAPS_API_KEY` é incluída no JavaScript enviado ao navegador; isso é esperado para esta chave de demonstração. `GOOGLE_MAPS_DEMO_API_KEY` é lida pelo servidor para chamar Geocoding e Routes. O projeto ignora `.env` no Git: **não substitua o `.env.example` pela sua cópia local e não publique credenciais pessoais**. O `.env.example` deve continuar com os valores vazios.
 
-As justificativas das decisões de produto e arquitetura ficam no guia pessoal fora deste repositório.
+Antes de migrar para chaves com faturamento ou disponibilizar uma versão hospedada, será necessário seguir as recomendações atuais do Google para restrições de origem e de API, quotas, HTTPS e separação entre chaves de navegador e servidor.
+
+## Acesso pelo celular
+
+O servidor de desenvolvimento escuta na rede local. Para testar em um celular:
+
+1. Conecte o celular e o computador à mesma rede Wi-Fi.
+2. Descubra o endereço IPv4 local do computador.
+3. No navegador do celular, abra `http://<IP-DO-COMPUTADOR>:5173`, substituindo o texto pelo endereço da sua rede.
+
+Se a página não carregar, verifique se o Firewall do Windows permite conexões locais ao Node.js. A busca de regiões funciona pela aplicação; já a localização atual pode ser bloqueada pelo navegador em HTTP, pois geolocalização normalmente exige um contexto seguro, como HTTPS ou `localhost`.
+
+## API local
+
+| Método e caminho | Finalidade |
+| --- | --- |
+| `GET /api/health` | Informa se os serviços Google estão configurados, sem devolver a chave. |
+| `POST /api/geocode` | Recebe `{ "address": "bairro, cidade" }` e retorna rótulo e coordenadas. |
+| `POST /api/routes/generate` | Recebe origem, distância desejada e terreno; retorna distância, duração e polyline codificada. |
+
+O servidor valida entradas e aplica limites de chamadas aos endpoints de geocodificação e geração de rotas. A API local é uma peça de desenvolvimento do protótipo, não um backend pronto para produção.
+
+## Scripts
+
+| Comando | Uso |
+| --- | --- |
+| `npm run dev:all` | Inicia a interface Vite e o servidor Express juntos. |
+| `npm run dev` | Inicia somente o Vite. |
+| `npm run dev:api` | Inicia somente o servidor Express em modo watch. |
+| `npm run build` | Executa a verificação TypeScript e gera a build de produção. |
+| `npm run lint` | Analisa o código com Oxlint. |
+
+## Estrutura principal
+
+```text
+src/
+  App.tsx             Tela, estado e fluxo principal do produto
+  App.css             Componentes visuais e regras responsivas
+  GoogleMapPanel.tsx  Mapa Google, busca e desenho da rota
+server/
+  index.js            Validação e endpoints da API local
+  dev-runner.js       Inicializa e encerra os serviços de desenvolvimento
+```
+
+## Próximas evoluções possíveis
+
+- Trocar cartões, popularidade e avaliações fictícias por rotas e fontes de dados reais, com origem e qualidade documentadas.
+- Fazer cada opção recomendada corresponder a uma geometria selecionável no mapa.
+- Avaliar dados de elevação para medir a compatibilidade com a preferência de terreno.
+- Definir como coletar e moderar feedback da comunidade sem expor a localização individual dos corredores.
+- Adicionar testes automatizados para regras de negócio e estados da interface.
+- Preparar hospedagem HTTPS, configuração de chaves apropriada e proteção operacional antes de disponibilizar o serviço publicamente.
+
+Esses itens são possibilidades para evoluir o MVP, não funcionalidades já disponíveis.
+
+## Privacidade e decisões
+
+O protótipo não oferece conta de usuário, não salva histórico de pesquisas e não persiste avaliações. Endereços e coordenadas informados são enviados ao Google para executar a busca ou solicitar uma rota; consulte também os termos aplicáveis do provedor. A interface só solicita a localização do dispositivo depois de uma ação explícita, sujeita à permissão do navegador.
+
+As decisões de produto e arquitetura foram registradas em um guia pessoal fora deste repositório. Este README descreve o comportamento implementado nesta versão pública.
