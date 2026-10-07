@@ -1,4 +1,4 @@
-# Pacefinder — Smart Route Recommendation
+# Pacefinder — Percursos de corrida
 
 Protótipo web de uma funcionalidade de descoberta e recomendação de percursos para corrida. A pessoa pode explorar uma região, visualizar uma camada demonstrativa de atividade e pedir uma rota circular caminhável.
 
