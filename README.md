@@ -1,5 +1,7 @@
 # Pacefinder
 
+**Portfólio do desenvolvedor:** [j-ferre1ra.github.io](https://j-ferre1ra.github.io/)
+
 **Descoberta e geração de percursos para corrida.**
 
 Pacefinder é um protótipo web que explora como um aplicativo de corrida pode ajudar a pessoa a decidir onde treinar. Ela escolhe uma região, informa a distância desejada e uma preferência de terreno; o sistema mostra uma rota caminhável aproximada no mapa.
