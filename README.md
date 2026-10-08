@@ -120,7 +120,7 @@ Os dois endpoints que chamam serviços Google validam as entradas e aplicam limi
 
 ## Publicar na Cloudflare Workers
 
-A interface e a API são publicadas juntas como um Worker com assets estáticos. O Cloudflare Vite plugin integra o build Vite ao runtime Workers; `worker/index.js` encaminha `/api/*` para a API compartilhada e os demais caminhos para os arquivos estáticos do SPA.
+A interface e a API são publicadas juntas como um Worker com assets estáticos. O Cloudflare Vite plugin integra o build Vite ao runtime Workers; `worker/index.js` encaminha `/api/*` para a API compartilhada e os demais caminhos para os arquivos estáticos do SPA. A configuração prioriza `/api/*` no Worker antes do fallback do SPA, para que uma chamada à API não receba o `index.html` por engano.
 
 Na tela **Workers & Pages → Create application → Continue with GitHub**, conecte o repositório `J-Ferre1ra/pacefinder` e use:
 
