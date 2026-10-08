@@ -1,0 +1,23 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "pacefinder",
+  "main": "./worker/index.js",
+  "compatibility_date": "2026-10-07",
+  "assets": {
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application"
+  },
+  "ratelimits": [
+    {
+      "name": "GEOCODE_RATE_LIMITER",
+      "namespace_id": "97152026071",
+      "simple": { "limit": 10, "period": 60 }
+    },
+    {
+      "name": "ROUTE_RATE_LIMITER",
+      "namespace_id": "97152026072",
+      "simple": { "limit": 10, "period": 60 }
+    }
+  ],
+  "observability": { "enabled": true }
+}

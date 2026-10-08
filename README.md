@@ -39,7 +39,8 @@ O cálculo atual usa a Routes API no modo de deslocamento a pé (`WALK`) e ponto
 
 - React 19, TypeScript e Vite para a interface.
 - CSS responsivo para os layouts desktop e mobile.
-- Node.js e Express para os endpoints locais que intermediam as chamadas de geocodificação e rotas.
+- Cloudflare Workers para os endpoints da API hospedada, com Express mantido como adaptador local opcional.
+- Cloudflare Vite plugin e Wrangler para executar, compilar e publicar interface e API como uma aplicação.
 - Google Maps JavaScript API para renderizar e interagir com o mapa.
 - Geocoding API v4 para converter o endereço pesquisado em coordenadas.
 - Routes API para solicitar o percurso caminhável.
@@ -54,20 +55,21 @@ cd pacefinder
 npm install
 ```
 
-Para iniciar a aplicação e a API local:
-
-```bash
-npm run dev:all
-```
-
-Abra `http://localhost:5173`. O Vite atende a interface e encaminha as chamadas `/api` ao servidor Express, iniciado na porta `8787` por padrão.
-
-Para iniciar os serviços separadamente, use dois terminais:
+Para iniciar interface e API no runtime local da Cloudflare Workers:
 
 ```bash
 npm run dev
+```
+
+Abra `http://localhost:5173`. O Vite serve a interface e executa os endpoints `/api` no mesmo runtime Workers usado no deploy. Isso reduz diferenças entre desenvolvimento e produção.
+
+O adaptador Express pode ser iniciado isoladamente para estudar ou comparar a execução Node local:
+
+```bash
 npm run dev:api
 ```
+
+Ele atende em `http://localhost:8787` por padrão e compartilha as mesmas regras HTTP usadas pelo Worker.
 
 ## Configurar o Google Maps Demo Key
 
@@ -90,7 +92,7 @@ Sem chave, a aplicação abre em modo demonstrativo e exibe mapas e percursos il
    PORT=8787
    ```
 
-4. Reinicie `npm run dev:all` para que a interface e o servidor carreguem as variáveis.
+4. Reinicie `npm run dev` para que o Vite e o runtime Worker carreguem as variáveis.
 
 `VITE_GOOGLE_MAPS_API_KEY` é incluída no JavaScript enviado ao navegador; isso é esperado para esta chave de demonstração. `GOOGLE_MAPS_DEMO_API_KEY` é lida pelo servidor para chamar Geocoding e Routes. O projeto ignora `.env` no Git: **não substitua o `.env.example` pela sua cópia local e não publique credenciais pessoais**. O `.env.example` deve continuar com os valores vazios.
 
@@ -114,17 +116,41 @@ Se a página não carregar, verifique se o Firewall do Windows permite conexões
 | `POST /api/geocode` | Recebe `{ "address": "bairro, cidade" }` e retorna rótulo e coordenadas. |
 | `POST /api/routes/generate` | Recebe origem, distância desejada e terreno; retorna distância, duração e polyline codificada. |
 
-O servidor valida entradas e aplica limites de chamadas aos endpoints de geocodificação e geração de rotas. A API local é uma peça de desenvolvimento do protótipo, não um backend pronto para produção.
+Os dois endpoints que chamam serviços Google validam as entradas e aplicam limites de dez chamadas por minuto. No Worker, os limites são por endereço IP e por região da Cloudflare; podem ser compartilhados por pessoas na mesma rede e são aproximados, não um sistema de contabilização exata. O adaptador Express local mantém limites independentes para desenvolvimento.
+
+## Publicar na Cloudflare Workers
+
+A interface e a API são publicadas juntas como um Worker com assets estáticos. O Cloudflare Vite plugin integra o build Vite ao runtime Workers; `worker/index.js` encaminha `/api/*` para a API compartilhada e os demais caminhos para os arquivos estáticos do SPA.
+
+Na tela **Workers & Pages → Create application → Continue with GitHub**, conecte o repositório `J-Ferre1ra/pacefinder` e use:
+
+| Configuração | Valor |
+| --- | --- |
+| Project name | `pacefinder` |
+| Build command | `npm run build` |
+| Deploy command | `npx wrangler deploy` |
+| Preview command | `npx wrangler preview` |
+| Root directory | Deixar em branco |
+
+O nome configurado no painel precisa corresponder a `name` em `wrangler.jsonc`. O build gera o diretório de assets e o arquivo Wrangler de saída usados pelo deploy; não configure `dist` como diretório manualmente nessa tela.
+
+Configure as credenciais em locais diferentes:
+
+- `VITE_GOOGLE_MAPS_API_KEY`: variável de **build** do Worker. Ela aparece no JavaScript entregue ao navegador, portanto é usada somente para o mapa e deve continuar sendo uma Demo Key de prototipagem.
+- `GOOGLE_MAPS_DEMO_API_KEY`: segredo de **runtime** do Worker, em **Settings → Variables & Secrets**. O código usa esse segredo para chamar Geocoding e Routes no servidor.
+
+O arquivo `.env` local é ignorado pelo Git. Não o publique; insira cada valor diretamente na configuração apropriada da Cloudflare. Depois de conectar o GitHub, pushes para `main` iniciam novos builds e deploys. O deploy do Pacefinder é independente do outro projeto Pages da conta.
 
 ## Scripts
 
 | Comando | Uso |
 | --- | --- |
-| `npm run dev:all` | Inicia a interface Vite e o servidor Express juntos. |
-| `npm run dev` | Inicia somente o Vite. |
-| `npm run dev:api` | Inicia somente o servidor Express em modo watch. |
+| `npm run dev` | Inicia interface Vite e API no runtime local de Workers. |
+| `npm run dev:api` | Inicia o adaptador Express local em modo watch. |
 | `npm run build` | Executa a verificação TypeScript e gera a build de produção. |
 | `npm run lint` | Analisa o código com Oxlint. |
+| `npm run preview` | Pré-visualiza a build no runtime local Cloudflare. |
+| `npm run deploy` | Publica a build já gerada com Wrangler. |
 
 ## Estrutura principal
 
@@ -134,8 +160,11 @@ src/
   App.css             Componentes visuais e regras responsivas
   GoogleMapPanel.tsx  Mapa Google, busca e desenho da rota
 server/
-  index.js            Validação e endpoints da API local
-  dev-runner.js       Inicializa e encerra os serviços de desenvolvimento
+  api-handler.js      Regras HTTP compartilhadas pela API local e pelo Worker
+  index.js            Adaptador Express opcional para desenvolvimento local
+worker/
+  index.js            Entrada da API executada em Cloudflare Workers
+wrangler.jsonc        Configuração de deploy, assets e limites de chamadas
 ```
 
 ## Próximas evoluções possíveis
