@@ -6,6 +6,10 @@ Pacefinder é um protótipo web que explora como um aplicativo de corrida pode a
 
 > **Esta é a primeira versão do projeto.** Ela valida o fluxo principal e a integração com mapas, mas ainda usa opções e informações genéricas em partes importantes da experiência. Não representa uma recomendação esportiva completa nem um serviço de segurança ou navegação para corrida.
 
+## Aplicação publicada
+
+Acesse a versão atual do Pacefinder em [pacefinder.programation-077.workers.dev](https://pacefinder.programation-077.workers.dev/).
+
 ## Por que este projeto existe
 
 Aplicativos de corrida acompanham atividades e desempenho, mas nem sempre ajudam a escolher um percurso que combine com o objetivo do treino. Uma distância ou ritmo planejado pode ser mais difícil de cumprir em um trajeto com subidas ou características desconhecidas.
