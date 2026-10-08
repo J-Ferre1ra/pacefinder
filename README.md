@@ -141,6 +141,8 @@ Configure as credenciais em locais diferentes:
 
 O arquivo `.env` local é ignorado pelo Git. Não o publique; insira cada valor diretamente na configuração apropriada da Cloudflare. Depois de conectar o GitHub, pushes para `main` iniciam novos builds e deploys. O deploy do Pacefinder é independente do outro projeto Pages da conta.
 
+Após um build bem-sucedido, verifique `https://pacefinder.<subdominio>.workers.dev/api/health`. A resposta deve indicar `routesApiConfigured: true` e `geocodingApiConfigured: true`; esses campos confirmam apenas que o segredo de runtime está disponível, sem revelar seu conteúdo. Se permanecerem `false`, confira se `GOOGLE_MAPS_DEMO_API_KEY` está configurada como secret no ambiente Production do Worker.
+
 ## Scripts
 
 | Comando | Uso |
